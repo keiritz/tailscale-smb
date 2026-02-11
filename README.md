@@ -13,7 +13,7 @@ macOS Finder
     ↓
 [samba コンテナ] ←network_mode: service:tailscale→ [tailscale コンテナ]
     ↓ volume mount
-/srv/renku, /srv/caddy-proxy, /home/deploy（ホスト）
+/（VPS 全体）
 ```
 
 ## セットアップ
@@ -29,7 +29,7 @@ macOS Finder
 ```bash
 cd /srv/tailscale-smb
 cp .env.example .env
-# .env を編集して TS_AUTHKEY と SAMBA_PASSWORD を設定
+# .env を編集して TS_AUTHKEY と SAMBA_PASSWORD_ROOT を設定
 docker compose up -d
 ```
 
@@ -43,20 +43,19 @@ docker exec ts-samba tailscale status
 ### 4. macOS Finder から接続
 
 1. Finder → Cmd+K（サーバへ接続）
-2. `smb://conoha-vps`（MagicDNS有効時）または `smb://<Tailscale IP>`
-3. ユーザー名: `deploy` / パスワード: .env の `SAMBA_PASSWORD`
+2. `smb://conoha-vps/vps`（MagicDNS有効時）または `smb://<Tailscale IP>/vps`
+3. ユーザー名: `root` / パスワード: .env の `SAMBA_PASSWORD_ROOT`
 
 ## 共有フォルダ
 
-| 共有名      | ホストパス         |
-| ----------- | ------------------ |
-| renku       | /srv/renku         |
-| caddy-proxy | /srv/caddy-proxy   |
-| home        | /home/deploy       |
+| 共有名 | ホストパス | 説明                 |
+| ------ | ---------- | -------------------- |
+| vps    | /          | VPS 全体（root のみ）|
 
 ## セキュリティ
 
 - Samba は Tailscale ネットワーク上でのみリスン（公開IP非露出）
 - SMB3 のみ許可（SMB1/2 無効）
 - ゲストアクセス無効
+- root ユーザーのみアクセス可能
 - `.env` は `.gitignore` で除外
