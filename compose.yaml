@@ -1,0 +1,52 @@
+services:
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: ts-samba
+    hostname: conoha-vps
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+
+  samba:
+    image: servercontainers/samba:latest
+    container_name: samba
+    network_mode: service:tailscale
+    depends_on:
+      - tailscale
+    environment:
+      SAMBA_CONF_MAP_TO_GUEST: "never"
+      SAMBA_CONF_SERVER_MIN_PROTOCOL: "SMB3"
+      SAMBA_CONF_SERVER_MAX_PROTOCOL: "SMB3"
+      # macOS Finder compatibility
+      SAMBA_GLOBAL_CONFIG_vfs_SPACE_objects: "fruit streams_xattr"
+      SAMBA_GLOBAL_CONFIG_fruit_COLON_metadata: "stream"
+      SAMBA_GLOBAL_CONFIG_fruit_COLON_model: "MacSamba"
+      SAMBA_GLOBAL_CONFIG_fruit_COLON_posix__SPACE_rename: "yes"
+      SAMBA_GLOBAL_CONFIG_fruit_COLON_nfs__SPACE_aces: "no"
+      SAMBA_GLOBAL_CONFIG_fruit_COLON_wipe__SPACE_intentionally__SPACE_left__SPACE_blank__SPACE_rfork: "yes"
+      SAMBA_GLOBAL_CONFIG_fruit_COLON_delete__SPACE_empty__SPACE_adfiles: "yes"
+      SAMBA_GLOBAL_CONFIG_veto_SPACE_files: "/._*/.DS_Store/"
+      SAMBA_GLOBAL_CONFIG_delete_SPACE_veto_SPACE_files: "yes"
+      # Share configurations
+      SAMBA_VOLUME_CONFIG_renku: "[renku]; path=/shares/renku; valid users = deploy; browseable = yes; read only = no"
+      SAMBA_VOLUME_CONFIG_caddy: "[caddy-proxy]; path=/shares/caddy-proxy; valid users = deploy; browseable = yes; read only = no"
+      SAMBA_VOLUME_CONFIG_home: "[home]; path=/shares/home; valid users = deploy; browseable = yes; read only = no"
+      ACCOUNT_deploy: ${SAMBA_PASSWORD}
+      UID_deploy: "1000"
+      GID_deploy: "1000"
+    volumes:
+      - /srv/renku:/shares/renku
+      - /srv/caddy-proxy:/shares/caddy-proxy
+      - /home/deploy:/shares/home
+    restart: unless-stopped
+
+volumes:
+  tailscale-state:
