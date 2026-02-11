@@ -36,16 +36,12 @@ services:
       SAMBA_GLOBAL_CONFIG_veto_SPACE_files: "/._*/.DS_Store/"
       SAMBA_GLOBAL_CONFIG_delete_SPACE_veto_SPACE_files: "yes"
       # Share configurations
-      SAMBA_VOLUME_CONFIG_renku: "[renku]; path=/shares/renku; valid users = deploy; browseable = yes; read only = no"
-      SAMBA_VOLUME_CONFIG_caddy: "[caddy-proxy]; path=/shares/caddy-proxy; valid users = deploy; browseable = yes; read only = no"
-      SAMBA_VOLUME_CONFIG_home: "[home]; path=/shares/home; valid users = deploy; browseable = yes; read only = no"
-      ACCOUNT_deploy: ${SAMBA_PASSWORD}
-      UID_deploy: "1000"
-      GID_deploy: "1000"
+      SAMBA_VOLUME_CONFIG_root: "[vps]; path=/shares/vps; valid users = root; browseable = yes; read only = no"
+      ACCOUNT_root: ${SAMBA_PASSWORD_ROOT}
+      UID_root: "0"
+      GID_root: "0"
     volumes:
-      - /srv/renku:/shares/renku
-      - /srv/caddy-proxy:/shares/caddy-proxy
-      - /home/deploy:/shares/home
+      - /:/shares/vps
     restart: unless-stopped
 
 volumes:
